@@ -19,7 +19,7 @@ type reqEntry struct {
 	ret *Result
 }
 
-// client groups requests under a string key so related requests
+// client groups multiple request for key 🤗 and fires it
 type client struct {
 	base string
 
@@ -53,13 +53,13 @@ func newClient(url string) *client {
 	}
 }
 
+// SetBase set the base url
 func (c *client) SetBase(url string) *client {
 	c.base = url
 	return c
 }
 
-// Add registers a new request under the given key (string).
-// Multiple calls with the same key group requests together.
+// Add registers a new request to fire
 func (c *client) Add(key string, method string) *client {
 	req, err := http.NewRequest(method, c.base, nil)
 	if err != nil {
@@ -111,6 +111,7 @@ func (c *client) Release() *client {
 	return c
 }
 
+// DelHeader delets the http set header
 func (c *client) DelHeader(key string) *client {
 	tk, ok := c.currentKey()
 	if !ok {
@@ -130,7 +131,15 @@ func (c *client) Remove(key string) *client {
 	return c
 }
 
-// Delete removes a single request (by id) from the group identified by key.
+func (c *client) GetAssociatedIDs(key string) []string {
+	ids := []string{}
+	for id := range c.reqs[key] {
+		ids = append(ids, id)
+	}
+	return ids
+}
+
+// Delete removes a single reques
 func (c *client) Delete(key string, id string) *client {
 	if group, ok := c.reqs[key]; ok {
 		delete(group, id)
@@ -158,7 +167,8 @@ func (c *client) doRequest(id string, entry *reqEntry) {
 	c.cheetah.Publish(id, entry.ret)
 }
 
-// Go manually firing every pending request synchronously across all groups.
+// Go manually fire and relies on GoMonitor
+// its better for POST stuffs
 func (c *client) Go() {
 	for _, group := range c.reqs {
 		for id, entry := range group {
@@ -169,12 +179,11 @@ func (c *client) Go() {
 
 type Handler func(result *Result)
 
-// GoMonitor fires every request concurrently and streams results to handler.
-// no need to use Go method if used this
+// GoMonitor fire & retrive
+// make sure to keep the conetxt wait else it wont work
 func (c *client) GoMonitor(ctx context.Context, handler Handler, fns ...func()) {
 	out := make(chan *Result, 100)
 
-	// Run setup fns FIRST so c.reqs is actually populated
 	for _, fn := range fns {
 		fn()
 	}
