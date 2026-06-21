@@ -4,6 +4,7 @@ package webaddress
 import (
 	"app/webaddress/cheetah"
 	"app/webaddress/stack"
+	"bytes"
 	"context"
 	"io"
 	"log"
@@ -60,8 +61,8 @@ func (c *client) SetBase(url string) *client {
 }
 
 // Add registers a new request to fire
-func (c *client) Add(key string, method string) *client {
-	req, err := http.NewRequest(method, c.base, nil)
+func (c *client) Add(key string, method string, payload []byte) *client {
+	req, err := http.NewRequest(method, c.base, bytes.NewBuffer(payload))
 	if err != nil {
 		log.Println(err)
 		return c

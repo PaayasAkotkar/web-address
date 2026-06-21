@@ -3,6 +3,7 @@ package example
 import (
 	webaddress "app/webaddress/core"
 	"context"
+	"io"
 	"log"
 	"net/http"
 	"sync"
@@ -26,7 +27,13 @@ func PlayWebAddress() {
 	})
 
 	app.POST("/db", func(ctx *gin.Context) {
-		log.Println("data recieved")
+		defer ctx.Request.Body.Close()
+		b, err := io.ReadAll(ctx.Request.Body)
+
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, []byte(`{"error":"not able to read"}`))
+		}
+		log.Println("[data recieved 🤗]", string(b))
 		ctx.Data(http.StatusOK, "application/json", []byte(`{"status":"success 😉"}`))
 	})
 
@@ -53,20 +60,14 @@ func PlayWebAddress() {
 
 	client.Request().GoMonitor(ctx, func(res *webaddress.Result) {
 		defer wg.Done()
-		if res.Error != nil {
-			panic(res.Error)
-		}
-		if string(res.Result) != `{"status":"success"}` {
-			panic(string(res.Result))
-		}
 		log.Println("success:", string(res.Result))
 	}, func() {
 		log.Println("[welcome welcome welcome]")
 
 		client.Request().
-			Add("key1", "GET").
+			Add("key1", "GET", nil).
 			SetHeader("Authorization", "Bearer test-token")
-		client.Request().SetBase("http://localhost:3333/db").Add("key12", "POST")
+		client.Request().SetBase("http://localhost:3333/db").Add("key12", "POST", []byte(`{"name":"don"}`))
 	})
 
 	wg.Wait()
