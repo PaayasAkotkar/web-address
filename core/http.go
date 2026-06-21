@@ -173,9 +173,12 @@ type Handler func(result *Result)
 // no need to use Go method if used this
 func (c *client) GoMonitor(ctx context.Context, handler Handler, fns ...func()) {
 	out := make(chan *Result, 100)
+
+	// Run setup fns FIRST so c.reqs is actually populated
 	for _, fn := range fns {
 		fn()
 	}
+
 	go func() {
 		for {
 			select {
@@ -197,35 +200,24 @@ func (c *client) GoMonitor(ctx context.Context, handler Handler, fns ...func()) 
 		for id, entry := range group {
 			id, entry := id, entry
 			go c.doRequest(id, entry)
-
 			go func(id string) {
-				for {
-					select {
-					case <-ctx.Done():
-						return
-					default:
-					}
+				ch := c.cheetah.Subscribe(id)
+				defer c.cheetah.Unsubscribe(id, ch)
 
-					ch := c.cheetah.Subscribe(id)
-					select {
-					case <-ctx.Done():
-						c.cheetah.Unsubscribe(id, ch)
+				select {
+				case <-ctx.Done():
+					return
+				case result, ok := <-ch:
+					if !ok || result == nil {
 						return
-					case result, ok := <-ch:
-						c.cheetah.Unsubscribe(id, ch)
-						if !ok || result == nil {
-							return
-						}
-						select {
-						case out <- result:
-						case <-ctx.Done():
-							return
-						}
+					}
+					select {
+					case out <- result:
+					case <-ctx.Done():
 					}
 				}
 			}(id)
 		}
 		_ = key
 	}
-
 }
