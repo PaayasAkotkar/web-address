@@ -7,5 +7,7 @@ import (
 
 func main() {
 	log.SetFlags(log.Lshortfile)
+	example.PlayWebAddressURL()
 	example.PlayWebAddress()
+
 }

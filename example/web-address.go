@@ -15,6 +15,7 @@ import (
 // PlayWebAddress showcases the usage of the webaddress package
 // the server starts -> push the request fetch the result
 func PlayWebAddress() {
+	log.Println("[request-firing-showcase]")
 
 	// daily stuff
 	app := gin.New()
@@ -72,4 +73,21 @@ func PlayWebAddress() {
 
 	wg.Wait()
 	// end
+	log.Println("[*****]")
+}
+
+// PlayWebAddressURL showcases how the url is being made using the url builder
+func PlayWebAddressURL() {
+	log.Println("[url-builder-showcase]")
+	base := "https://graph.facebook.com"
+	b := webaddress.New(base)
+	url := b.Path("v25.0").Path("oauth").Path("access_token").
+		Field("grant_type", "fb_exchange_token").
+		Field("client_id", "xxx").
+		Field("client_secret", "xxx").
+		Field("fb_exchange_token", "xxxx").
+		Generate()
+	log.Println("[build]", url)
+	log.Println("[*****]")
+
 }

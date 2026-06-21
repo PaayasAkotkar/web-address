@@ -23,13 +23,6 @@ func New(baseURL string) *WebAddress {
 	}
 }
 
-func (w *WebAddress) Field(key, value string) *WebAddress {
-	q := w.base.Query()
-	q.Add(key, value)
-	w.base.RawQuery = q.Encode()
-	return w
-}
-
 // Path appends a segment to the URL path
 // e.g., calling .Path("me") on "https://graph.facebook.com/v25.0"
 // results in "https://graph.facebook.com/v25.0/me"
@@ -54,4 +47,11 @@ func (w *WebAddress) Generate() string {
 
 func (w *WebAddress) Request() *client {
 	return w.client
+}
+
+func (w *WebAddress) Field(key, value string) *WebAddress {
+	q := w.base.Query()
+	q.Add(key, value)
+	w.base.RawQuery = q.Encode()
+	return w
 }
