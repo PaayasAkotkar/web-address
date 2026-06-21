@@ -1,4 +1,3 @@
-// Package webaddress implements the url builder
 package webaddress
 
 import (
