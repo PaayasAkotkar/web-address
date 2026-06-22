@@ -1,4 +1,4 @@
-// Package webaddress implements the url builder and a small grouped HTTP client
+// Package webaddress implements the url builder and grouped HTTP client
 package webaddress
 
 import (
